@@ -5,6 +5,7 @@ import 'dart:ffi';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:newbie/screens/home_screen.dart';
 import 'package:newbie/screens/signin_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:newbie/screens/chartbar.dart';
@@ -17,7 +18,7 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
- List<transaction> transa = [];
+  List<transaction> transa = [];
 
 class _HomeScreenState extends State<HomeScreen> {
   @override
@@ -42,7 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
     ),
-          Expanded(
+          const Expanded(
          child: UserInformation(),),
         ]
         ),
@@ -119,7 +120,7 @@ class _TransactionListState extends State<TransactionList> {
       'Date':chosendate.toString(),
     });
     setState(() {
-      transa.add(newtx);
+      // transa.add(newtx);
       c++;
     });
   }
@@ -321,10 +322,11 @@ class _ChartState extends State<Chart> {
 //   }
 // }
 
-final User? user = FirebaseAuth.instance.currentUser;
-final uid = user?.uid;
+
 class UserInformation extends StatefulWidget {
   const UserInformation({super.key});
+
+
 
   @override
   _UserInformationState createState() => _UserInformationState();
@@ -337,7 +339,14 @@ class _UserInformationState extends State<UserInformation> {
     super.initState();
   }
 
-   Stream<QuerySnapshot> itemslist = FirebaseFirestore.instance.collection("users").doc(uid).collection("items").snapshots();
+  User? user = FirebaseAuth.instance.currentUser;
+ late String? idd = user?.uid;
+  late  Stream<QuerySnapshot> itemslist=FirebaseFirestore.instance.collection(
+  "users").doc(idd).collection("items").snapshots();
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -345,17 +354,22 @@ class _UserInformationState extends State<UserInformation> {
       stream: itemslist,
       builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot)
     {
+
       if (snapshot.hasError) {
         return Text('Something went wrong');
       }
 
-      if (snapshot.connectionState == ConnectionState.waiting) {
-        return Text("Loading");
-      }
+
       // snapshot.data!.docs.map()forEach(data)=>(
       // transa.add(transaction(title:data["title"]?? "",amt:data["amount"]?? 0.0,date:DateTime.parse(data["Date"])??DateTime.now(),id:2));
       // );
-      print("hellllooo");
+      if(!snapshot.hasData || snapshot.data?.size == 0) {
+
+        print("no data $snapshot.hasData");
+        return Container(child:Text("No data"));
+      }
+      else {
+      print("hellllooo $snapshot.hasData");
       print(snapshot.data!.docs.first["title"]);
       snapshot.data!.docs.forEach((element) { });
       transa = snapshot.data!.docs.map((ata)=>transaction(title:ata["title"]
@@ -393,7 +407,12 @@ class _UserInformationState extends State<UserInformation> {
         }
         ).toList(),
       );
+      }
         },
     );
   }
+//   Future<List<transaction>> getlist()async{
+//     return  transa = itemslist.data!.docs.map((ata)=>transaction(title:ata["title"]
+//         ?? "",amt:ata["amount"]?? 0.0,date:DateTime.parse(ata["Date"])??DateTime.now(),id:2)).toList();
+// }
 }
