@@ -1,6 +1,8 @@
 
 
-import 'dart:ffi';
+import 'dart:async';
+import 'dart:core';
+
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -18,9 +20,10 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-  List<transaction> transa = [];
+
 
 class _HomeScreenState extends State<HomeScreen> {
+
   @override
   Widget build(BuildContext context) {
 
@@ -44,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     ),
           const Expanded(
-         child: UserInformation(),),
+         child:UserInformation(),),
         ]
         ),
 
@@ -79,6 +82,32 @@ class transaction {
         required this.amt,
         required this.date});
 }
+class rtransaction {
+  final int id;
+  final String title;
+  final double amt;
+  final String date;
+  rtransaction(
+      {required this.id,
+        required this.title,
+        required this.amt,
+        required this.date});
+}
+Future<Stream<List<transaction>>>  getUserTaskLists() async {
+  User? user = FirebaseAuth.instance.currentUser;
+  String? idd = user?.uid;
+  Stream<QuerySnapshot> stream =
+  FirebaseFirestore.instance.collection(
+      "users").doc(idd).collection("items").snapshots();
+  Stream<List<transaction>> transa =   stream.asyncMap(
+          (qShot) => qShot.docs.map(
+              (ata) => transaction(title:ata["title"]
+              ?? "",amt:ata["amount"]?? 0.0,date:DateTime.parse(ata["Date"])??DateTime.now(),id:2)
+      ).toList()
+  );
+
+  return transa;
+}
 
 class TransactionList extends StatefulWidget {
   const TransactionList({Key? key}) : super(key: key);
@@ -87,10 +116,26 @@ class TransactionList extends StatefulWidget {
   _TransactionListState createState() => _TransactionListState();
 }
 
-class _TransactionListState extends State<TransactionList> {
+class _TransactionListState extends State<TransactionList>  {
   final titlecontroller = TextEditingController();
   final amtcontroller = TextEditingController();
   DateTime selecteddate = DateTime(1999);
+  User? user = FirebaseAuth.instance.currentUser;
+  late String? idd = user?.uid;
+
+  late Stream<QuerySnapshot> snapshot = FirebaseFirestore.instance.collection(
+       "users").doc(idd).collection("items").snapshots();
+
+
+
+
+ late  Stream<List<transaction>> list = snapshot.map((data)=>
+      data.docs.where((d) =>  DateTime.parse(d["Date"]).isAfter(  DateTime.now().subtract(
+        const Duration(days: 7),),)).map((ata)=>transaction(title:ata["title"]
+      ?? "",amt:ata["amount"]?? 0.0,date:DateTime.parse(ata["Date"])??DateTime.now(),id:2)).toList());
+
+  // data!.docs.map((ata)=>transaction(title:ata["title"]
+  // ?? "",amt:ata["amount"]?? 0.0,date:DateTime.parse(ata["Date"])??DateTime.now(),id:2)).toList();
 
   void _presentdatepicker() {
     showDatePicker(
@@ -115,9 +160,11 @@ class _TransactionListState extends State<TransactionList> {
     final uid = user?.uid;
     DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(uid).collection("items").doc();
     users.set({
+      'id':users.id,
       'title':txtitle,
       'amount': amont,
       'Date':chosendate.toString(),
+      'Day':DateFormat.E().format(chosendate),
     });
     setState(() {
       // transa.add(newtx);
@@ -127,23 +174,24 @@ class _TransactionListState extends State<TransactionList> {
 
   void _deletetrans(String idd) {
     setState(() {
-      transa.removeWhere((index) => index.id.toString() == idd);
+
     });
   }
-
-  List<transaction> get _recenttransactions {
-    return transa.where((tx) {
-      return tx.date.isAfter(
-        DateTime.now().subtract(
-          Duration(days: 7),
-        ),
-      );
-    }).toList();
-  }
+  //
+  //  Stream<List<transaction>> get _recenttransactions {
+  //
+  //   return list.takeWhile((tx) {
+  //
+  //        return DateTime.parse(tx.date).isAfter(
+  //           DateTime.now().subtract(
+  //           Duration(days: 7),),);
+  //     });
+  //
+  // }
 
   Function get aad => addnewtx;
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context)  {
     return SingleChildScrollView(
         child: Container(
             child: Container(
@@ -154,12 +202,9 @@ class _TransactionListState extends State<TransactionList> {
                       Card(
                         child: Container(
                           width: double.infinity,
-                          child: Chart(_recenttransactions),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.red, width: 5),
-                          ),
-                        ),
-                      ),
+                          child:StreamBuilder(stream:list, builder:(BuildContext context,AsyncSnapshot<List<transaction>> snapshot){if(snapshot.hasData)return Chart(snapshot.data!);else return CircularProgressIndicator();}),
+
+                      ),),
                       TextField(
                           controller: titlecontroller,
                           decoration: InputDecoration(labelText: 'enter name')),
@@ -371,9 +416,7 @@ class _UserInformationState extends State<UserInformation> {
       else {
       print("hellllooo $snapshot.hasData");
       print(snapshot.data!.docs.first["title"]);
-      snapshot.data!.docs.forEach((element) { });
-      transa = snapshot.data!.docs.map((ata)=>transaction(title:ata["title"]
-          ?? "",amt:ata["amount"]?? 0.0,date:DateTime.parse(ata["Date"])??DateTime.now(),id:2)).toList();
+
       return ListView(
         children: snapshot.data!.docs.map((DocumentSnapshot document) {
           Map<String, dynamic> data = document.data()! as Map<String,
@@ -385,7 +428,7 @@ class _UserInformationState extends State<UserInformation> {
               leading: CircleAvatar(
                   radius: 30,
                   child:
-                  FittedBox(child: Text("1"))),
+                  FittedBox(child: Text(data["Day"]))),
               title: Text(
                   data["title"] +
                       " \n" +
@@ -400,7 +443,11 @@ class _UserInformationState extends State<UserInformation> {
 
               trailing: IconButton(
                   icon: const Icon(Icons.delete),
-                  onPressed: () => {}
+                  onPressed: ()  {
+                 DocumentReference docref =FirebaseFirestore.instance.collection(
+                        "users").doc(idd).collection("items").doc(data["id"]);
+                 docref.delete();
+                  }
                 // _deletetrans(tx.id.toString())),
               )
           );
