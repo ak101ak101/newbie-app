@@ -447,6 +447,7 @@ class _UserInformationState extends State<UserInformation> {
                  DocumentReference docref =FirebaseFirestore.instance.collection(
                         "users").doc(idd).collection("items").doc(data["id"]);
                  docref.delete();
+                 const TransactionList();
                   }
                 // _deletetrans(tx.id.toString())),
               )
