@@ -68,7 +68,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       .then((value) {
                     print("Created New Account");
                     FirebaseFirestore firestore = FirebaseFirestore.instance;
-                    adduserinfo(firestore,_userNameTextController.text);
+                    adduserinfo(firestore,_userNameTextController.text,_emailTextController.text);
                     Navigator.push(context,
                         MaterialPageRoute(builder: (context) => HomeScreen()));
                   }).onError((error, stackTrace) {
@@ -82,7 +82,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 }
 
-Future<void> adduserinfo(firestore,name) {
+Future<void> adduserinfo(firestore,name,email) {
 
 final User? user = FirebaseAuth.instance.currentUser;
 final uid = user?.uid;
@@ -91,6 +91,8 @@ DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.colle
   return users.set
       ({
     'name': name,
+    'email':email,
+    'id':uid,
   })
       .then((value) => print("User Added"))
       .catchError((error) => print("Failed to add user: $error"));

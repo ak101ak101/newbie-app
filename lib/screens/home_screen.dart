@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:core';
 import 'package:fluttertoast/fluttertoast.dart';
 
-
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -25,6 +25,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
  int _selectedIndex = 0;
+
  final pages = [
 
    const Home(),
@@ -206,8 +207,7 @@ class _TransactionListState extends State<TransactionList>  {
   }
 
   Future<void> addnewtx(String txtitle, double amont, DateTime chosendate) async {
-    final newtx =
-    transaction(title: txtitle, amt: amont, id: c, date: chosendate);
+
     final User? user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid;
     DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(uid).collection("items").doc();
@@ -218,28 +218,11 @@ class _TransactionListState extends State<TransactionList>  {
       'Date':chosendate.toString(),
       'Day':DateFormat.E().format(chosendate),
     });
-    setState(() {
-      // transa.add(newtx);
-      c++;
-    });
+ titlecontroller.clear();
+ amtcontroller.clear();
   }
 
-  void _deletetrans(String idd) {
-    setState(() {
 
-    });
-  }
-  //
-  //  Stream<List<transaction>> get _recenttransactions {
-  //
-  //   return list.takeWhile((tx) {
-  //
-  //        return DateTime.parse(tx.date).isAfter(
-  //           DateTime.now().subtract(
-  //           Duration(days: 7),),);
-  //     });
-  //
-  // }
 
   Function get aad => addnewtx;
   @override
@@ -254,20 +237,24 @@ class _TransactionListState extends State<TransactionList>  {
                       Card(
                         child: Container(
                           width: double.infinity,
-                          child:StreamBuilder(stream:list, builder:(BuildContext context,AsyncSnapshot<List<transaction>> snapshot){if(snapshot.hasData)return Chart(snapshot.data!);else return CircularProgressIndicator();}),
+                          child:StreamBuilder(stream:list, builder:(BuildContext context,AsyncSnapshot<List<transaction>> snapshot){if(snapshot.hasData)return Chart(snapshot.data!);else return Center(child:CircularProgressIndicator());}),
 
                       ),),
                       TextField(
                           controller: titlecontroller,
-                          decoration: InputDecoration(labelText: 'enter name')),
+                          decoration: InputDecoration(labelText: 'Item name')),
                       TextField(
                           controller: amtcontroller,
-                          decoration: InputDecoration(labelText: 'enter amt')),
+                          decoration: InputDecoration(labelText: 'Enter Amount'),
+                          keyboardType: TextInputType.number,
+
+                      ),
+
                       Container(
                         height: 70,
                         child: Row(children: <Widget>[
                           Expanded(
-                            child: Text(selecteddate == DateTime(1999)
+                            child: Text(selecteddate == DateTime.now()
                                 ? 'No date chosen'
                                 : 'Picked Date : ${DateFormat.yMd().format(selecteddate)}'),
                           ),
@@ -289,48 +276,26 @@ class _TransactionListState extends State<TransactionList>  {
                         alignment: Alignment.bottomRight,
                      child: FloatingActionButton(
                         onPressed: () {
+                          if(titlecontroller.text.isNotEmpty){
                           aad(titlecontroller.text,
-                              double.parse(amtcontroller.text), selecteddate);
+                              double.parse(amtcontroller.text), selecteddate);}
+                          else{
+                            Fluttertoast.showToast(
+                                msg: "Field cannot be empty",
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.CENTER,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+                          }
                         },
 
                         child: const Text("add"),
                       ),
                       ),
 
-                      Column(
-                        children:<Widget> [
 
-                        ]
-                        // children: transa.map((tx) {
-                        //   return Card(
-                        //     elevation: 5,
-                        //     margin: EdgeInsets.symmetric(
-                        //         vertical: 8, horizontal: 5),
-                        //     child: ListTile(
-                        //       leading: CircleAvatar(
-                        //           radius: 30,
-                        //           child:
-                        //           FittedBox(child: Text(tx.id.toString()))),
-                        //       title: Text(
-                        //           tx.title +
-                        //               " \n" +
-                        //               "Cost=" +
-                        //               tx.amt.toString(),
-                        //           style: TextStyle(
-                        //               fontWeight: FontWeight.bold,
-                        //               fontSize: 20,
-                        //               color: Colors.purple)),
-                        //       subtitle:
-                        //       Text(DateFormat('EEE,d/M/y').format(tx.date)),
-                        //       trailing: IconButton(
-                        //           icon: Icon(Icons.delete),
-                        //           onPressed: () =>
-                        //               _deletetrans(tx.id.toString())),
-                        //     ),
-                        //   );
-                        // }).toList(),
-
-                      ),
 
                     ]
                 )
@@ -1044,6 +1009,8 @@ Future alertboc(context) async {
             onChanged: (value) { },
             controller: amountcontroller,
             decoration: InputDecoration(hintText: "Amount to give",labelText:"Enter Amount"),
+              keyboardType: TextInputType.number
+
           ),
           TextField(
 
@@ -1062,6 +1029,7 @@ Future alertboc(context) async {
      TextButton(onPressed: () async {
        final User? user = FirebaseAuth.instance.currentUser;
        final uid = user?.uid;
+       final email = user?.email;
        DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(uid).collection("give").doc();
        if(amountcontroller.text.isNotEmpty  && namecontroller.text.isNotEmpty) {
          users.set({
@@ -1076,6 +1044,7 @@ Future alertboc(context) async {
 
 
        );
+         sendtakedata(namecontroller.text, emailcontroller.text, amountcontroller.text, desccontroller.text,email!);
        }
        else{
          Fluttertoast.showToast(
@@ -1126,6 +1095,8 @@ Future takealertboc(context) async {
               onChanged: (value) { },
               controller: amountcontroller,
               decoration: InputDecoration(hintText: "Amount to take",labelText:"Enter Amount"),
+                keyboardType: TextInputType.number,
+
             ),
             TextField(
 
@@ -1144,6 +1115,7 @@ Future takealertboc(context) async {
         TextButton(onPressed: () async {
           final User? user = FirebaseAuth.instance.currentUser;
           final uid = user?.uid;
+          final email = user?.email;
           DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(uid).collection("take").doc();
           if(amountcontroller.text.isNotEmpty  && namecontroller.text.isNotEmpty) {
             users.set({
@@ -1158,6 +1130,7 @@ Future takealertboc(context) async {
 
 
             );
+            sendgivedata(namecontroller.text, emailcontroller.text, amountcontroller.text, desccontroller.text,email!);
           }
           else{
             Fluttertoast.showToast(
@@ -1176,4 +1149,99 @@ Future takealertboc(context) async {
     ),
     context: context,
   );
+}
+
+Future<void> sendgivedata(String name,String email,String amount,String desc,String semail) async {
+  // Get docs from collection reference
+  final fireStore = FirebaseFirestore.instance;
+  QuerySnapshot querySnapshot = await fireStore.collection('users').where("email",isEqualTo:email).get();
+
+  // Get data from docs and convert map to List
+
+    // print(data["email"]);
+
+// allData.takeWhile((value) => value == "nam@gmail.com");
+
+
+  final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
+  Map<String, String?> map = Map.fromIterable(allData,
+      key: (item) => 'uid',
+      value: (item) =>  item['id'],
+  );
+  print(map);
+if(map["uid"] != null) {
+  DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(map["uid"]).collection("give").doc();
+
+  users.set({
+    'id':users.id,
+    'name':name,
+    'amount':amount,
+    'desc':desc,
+    'email':semail,
+    'date':DateTime.now().toString(),
+    'given':false
+  }
+
+
+  );
+}
+else{
+
+  Fluttertoast.showToast(
+      msg: "User not found ",
+      toastLength: Toast.LENGTH_LONG,
+      gravity: ToastGravity.CENTER,
+      timeInSecForIosWeb: 1,
+      backgroundColor: Colors.black,
+      textColor: Colors.white,
+      fontSize: 16.0
+  );
+}
+}
+Future<void> sendtakedata(String name,String email,String amount,String desc,String semail) async {
+  // Get docs from collection reference
+  final fireStore = FirebaseFirestore.instance;
+  QuerySnapshot querySnapshot = await fireStore.collection('users').where("email",isEqualTo:email).get();
+
+  // Get data from docs and convert map to List
+
+  // print(data["email"]);
+
+// allData.takeWhile((value) => value == "nam@gmail.com");
+
+
+  final allData = querySnapshot.docs.map((doc) => doc.data()).toList();
+  Map<String, String?> map = Map.fromIterable(allData,
+    key: (item) => 'uid',
+    value: (item) =>  item['id'],
+  );
+  print(map);
+  if(map["uid"] != null) {
+    DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(map["uid"]).collection("take").doc();
+
+    users.set({
+      'id':users.id,
+      'name':name,
+      'amount':amount,
+      'desc':desc,
+      'email':semail,
+      'date':DateTime.now().toString(),
+      'taken':false
+    }
+
+
+    );
+  }
+  else{
+
+    Fluttertoast.showToast(
+        msg: "User not found ",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.CENTER,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
+  }
 }
