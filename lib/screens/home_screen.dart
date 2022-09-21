@@ -95,6 +95,31 @@ BottomNavigationBarItem(icon:Icon(Icons.arrow_circle_up_outlined),label:"Give"),
                   },
                 ),
                 ListTile(
+                  leading: Icon(Icons.attach_money_rounded),
+                  title: Text("Estimated budget"),
+                  onTap: () {
+                    Give();
+                  },
+
+                ),
+                ListTile(
+                  leading: Icon(Icons.history),
+                  title: Text("Monthly Expenditure"),
+                  onTap: () {
+                    Give();
+                  },
+
+                ),
+
+                ListTile(
+                  leading: Icon(Icons.edit_sharp),
+                  title: Text("Edit Profile"),
+                  onTap: () {
+                    Give();
+                  },
+
+                ),
+                ListTile(
                   leading: Icon(Icons.logout),
                   title: Text("Logout"),
                   onTap: () {
@@ -240,60 +265,70 @@ class _TransactionListState extends State<TransactionList>  {
                           child:StreamBuilder(stream:list, builder:(BuildContext context,AsyncSnapshot<List<transaction>> snapshot){if(snapshot.hasData)return Chart(snapshot.data!);else return Center(child:CircularProgressIndicator());}),
 
                       ),),
-                      TextField(
-                          controller: titlecontroller,
-                          decoration: InputDecoration(labelText: 'Item name')),
-                      TextField(
-                          controller: amtcontroller,
-                          decoration: InputDecoration(labelText: 'Enter Amount'),
-                          keyboardType: TextInputType.number,
+                      // TextField(
+                      //     controller: titlecontroller,
+                      //     decoration: InputDecoration(labelText: 'Item name')),
+                      // TextField(
+                      //     controller: amtcontroller,
+                      //     decoration: InputDecoration(labelText: 'Enter Amount'),
+                      //     keyboardType: TextInputType.number,
+                      //
+                      // ),
+                      //
+                      // Container(
+                      //   height: 70,
+                      //   child: Row(children: <Widget>[
+                      //     Expanded(
+                      //       child: Text(selecteddate == DateTime.now()
+                      //           ? 'No date chosen'
+                      //           : 'Picked Date : ${DateFormat.yMd().format(selecteddate)}'),
+                      //     ),
+                      //     TextButton(
+                      //       style: TextButton.styleFrom(
+                      //         padding: const EdgeInsets.all(16.0),
+                      //         primary: Colors.blue,
+                      //         textStyle: const TextStyle(
+                      //             color: Colors.white,
+                      //             fontSize: 15,
+                      //             fontWeight: FontWeight.bold),
+                      //       ),
+                      //       child: Text("Chose date"),
+                      //       onPressed: _presentdatepicker,
+                      //     ),
+                      //   ]
+                      //   ),
+                      // ),
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: <Widget>[
 
-                      ),
+                        Text("Expenses",style: const TextStyle(fontWeight: FontWeight.bold,fontSize:20)),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: ElevatedButton(
+                            onPressed: () {
 
-                      Container(
-                        height: 70,
-                        child: Row(children: <Widget>[
-                          Expanded(
-                            child: Text(selecteddate == DateTime.now()
-                                ? 'No date chosen'
-                                : 'Picked Date : ${DateFormat.yMd().format(selecteddate)}'),
+                              // if(titlecontroller.text.isNotEmpty){
+                              // aad(titlecontroller.text,
+                              //     double.parse(amtcontroller.text), selecteddate);}
+                              // else{
+                              //   Fluttertoast.showToast(
+                              //       msg: "Field cannot be empty",
+                              //       toastLength: Toast.LENGTH_LONG,
+                              //       gravity: ToastGravity.CENTER,
+                              //       timeInSecForIosWeb: 1,
+                              //       backgroundColor: Colors.black,
+                              //       textColor: Colors.white,
+                              //       fontSize: 16.0);
+                              // }
+                              addnewitem(context);
+                            },
+
+                            child: const Text("add"),
                           ),
-                          TextButton(
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.all(16.0),
-                              primary: Colors.blue,
-                              textStyle: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            child: Text("Chose date"),
-                            onPressed: _presentdatepicker,
-                          ),
-                        ]),
-                      ),
-                      Align(
-                        alignment: Alignment.bottomRight,
-                     child: FloatingActionButton(
-                        onPressed: () {
-                          if(titlecontroller.text.isNotEmpty){
-                          aad(titlecontroller.text,
-                              double.parse(amtcontroller.text), selecteddate);}
-                          else{
-                            Fluttertoast.showToast(
-                                msg: "Field cannot be empty",
-                                toastLength: Toast.LENGTH_LONG,
-                                gravity: ToastGravity.CENTER,
-                                timeInSecForIosWeb: 1,
-                                backgroundColor: Colors.black,
-                                textColor: Colors.white,
-                                fontSize: 16.0);
-                          }
-                        },
+                        ),
+                      ])
 
-                        child: const Text("add"),
-                      ),
-                      ),
 
 
 
@@ -301,6 +336,106 @@ class _TransactionListState extends State<TransactionList>  {
                 )
             )
         ));
+  }
+
+  Future addnewitem(context) async {
+    var namecontroller = TextEditingController() ;
+
+    var amountcontroller = TextEditingController() ;
+
+    return showDialog(
+
+      builder: (context) =>  StatefulBuilder(
+    builder:(context,setState){
+      return AlertDialog(
+        title: const Text('TextField in Dialog'),
+        content: Column(
+          mainAxisSize:MainAxisSize.min,
+          children:<Widget>[
+            TextField(
+                controller: namecontroller,
+                decoration: InputDecoration(labelText: 'Item name')),
+            TextField(
+              controller: amountcontroller,
+              decoration: InputDecoration(labelText: 'Enter Amount'),
+              keyboardType: TextInputType.number,
+
+            ),
+
+            SizedBox(
+              height: 70,
+              child: Row(children: <Widget>[
+                Expanded(
+                  child: Text(selecteddate == DateTime.now()
+                      ? 'No date chosen'
+                      : 'Picked Date : ${DateFormat.yMd().format(selecteddate)}'),
+                ),
+                TextButton(
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.all(16.0),
+                    primary: Colors.blue,
+                    textStyle: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold),
+                  ),
+                  child: Text("Chose date"),
+                  onPressed: (){
+                    showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        lastDate: DateTime.now(),
+                        firstDate: DateTime(2010))
+                        .then((pickedDate) {
+                      if (pickedDate == null) {
+                        return;
+                      }
+                      setState(() {
+                        selecteddate = pickedDate;
+                      });
+                    });
+                  },
+                ),
+              ]
+              ),
+            ),
+
+          ],
+        ),
+        actions:[
+          TextButton(onPressed: () {
+            Navigator.of(context).pop();
+          }, child: Text("Cancel"),
+
+          ),
+          TextButton(onPressed: () async {
+            final User? user = FirebaseAuth.instance.currentUser;
+            final uid = user?.uid;
+            final email = user?.email;
+            DocumentReference<Map<String, dynamic>> users = FirebaseFirestore.instance.collection("users").doc(uid).collection("take").doc();
+            if(amountcontroller.text.isNotEmpty  && namecontroller.text.isNotEmpty) {
+              addnewtx(namecontroller.text,
+                  double.parse(amountcontroller.text), selecteddate);
+
+            }
+            else{
+              Fluttertoast.showToast(
+                  msg: "Fields cannot be null",
+                  toastLength: Toast.LENGTH_LONG,
+                  gravity: ToastGravity.CENTER,
+                  timeInSecForIosWeb: 1,
+                  backgroundColor: Colors.black,
+                  textColor: Colors.white,
+                  fontSize: 16.0
+              );
+            }
+            Navigator.of(context).pop();
+          }, child: Text("Add"),),
+        ],
+      );
+    },
+
+    ), context: context,);
   }
 }
 
@@ -354,6 +489,8 @@ class _ChartState extends State<Chart> {
           ),
         ),
         Text('Total weekly spending = $tspending',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        Text('Estimated Budget = 1500',
             style: TextStyle(fontWeight: FontWeight.bold))
       ],
     );
