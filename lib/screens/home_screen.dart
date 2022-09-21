@@ -33,6 +33,12 @@ class _HomeScreenState extends State<HomeScreen> {
 const Give(),
 
  ];
+
+ final Stream<DocumentSnapshot> _usersStream = FirebaseFirestore.instance
+     .collection("users")
+     .doc(FirebaseAuth.instance.currentUser?.uid)
+     .snapshots();
+
   @override
   Widget build(BuildContext context) {
 
@@ -68,11 +74,31 @@ BottomNavigationBarItem(icon:Icon(Icons.arrow_circle_up_outlined),label:"Give"),
               padding: EdgeInsets.all(8.0),
               children: [
                 UserAccountsDrawerHeader(
-                  accountName: Text("Akshat"),
-                  accountEmail: Text("akshatdot@gmail.com"),
+                  accountName:StreamBuilder(stream:_usersStream , builder:(context, AsyncSnapshot<DocumentSnapshot> snapshot){
+              if (!snapshot.hasData) {
+                return Text("Loading");
+              } else if (snapshot.hasError) {
+                return Text('Something went wrong');
+              } else if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              }
+              dynamic data = snapshot.data;
+              return  Text(data['name']);
+            }),
+                  accountEmail: StreamBuilder(stream:_usersStream , builder:(context, AsyncSnapshot<DocumentSnapshot> snapshot){
+                    if (!snapshot.hasData) {
+                      return Text("Loading");
+                    } else if (snapshot.hasError) {
+                      return Text('Something went wrong');
+                    } else if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    }
+                    dynamic data = snapshot.data;
+                    return  Text(data['email']);
+                  }),
                   currentAccountPicture: CircleAvatar(
                     backgroundColor: Colors.blue,
-                    child: Image.asset("assets/images/pp.jpeg", width: 50, height: 50),
+                    child: Image.asset("assets/images/pp.jpg", width: 50, height: 50),
                   ),
                 ),
                 ListTile(
@@ -1382,3 +1408,4 @@ Future<void> sendtakedata(String name,String email,String amount,String desc,Str
     );
   }
 }
+
